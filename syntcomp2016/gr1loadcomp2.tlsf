@@ -1,0 +1,43 @@
+INFO {
+  TITLE:       "Test based on Load Balancing - Environment - 2 Clients"
+  DESCRIPTION: "Modification of one of the Acacia+ Example files"
+  SEMANTICS:   Mealy,Strict
+  TARGET:      Mealy
+}
+
+MAIN {
+
+  INPUTS {
+    idle;
+    request0;
+    request1;
+  }
+
+  OUTPUTS {
+    grant0;
+    grant1;
+  }
+  
+  REQUIRE {  
+      !(idle && !grant0 && !grant1) || X idle;    
+  }
+
+  ASSUMPTIONS {
+    G F idle;
+  }
+
+  ASSERT {
+    !request0 || !grant1;
+    !grant0 || !grant1;
+    !grant1 || !grant0;
+    !grant0 || request0;
+    !grant1 || request1;
+    (!grant0 && !grant1) || idle;
+  }
+
+  GUARANTEES {
+    G F (! request0 || grant0);
+    G F (! request1 || grant1);
+  }
+
+}

@@ -1,0 +1,114 @@
+INFO {
+  TITLE:       "Cinderella-Stepmother Game"
+  DESCRIPTION: "Cinderella-Stepmother Game"
+  SEMANTICS:   Mealy,Strict
+  TARGET:      Mealy
+}
+
+GLOBAL {
+    DEFINITIONS {
+    
+        /* Returns the i-th bit of the numerical value v.
+         */
+        bit(v,i) =
+          i <= 0     : v % 2
+          otherwise : bit(v / 2,i - 1);
+
+         /* Checks whether a bus of size log(n) currently represents 
+             * the numerical value v (encoded in binary).
+             */
+            value(bus,v) = value'(bus,v,0,SIZEOF bus);
+            value'(bus,v,i,j) =
+              j <= 0        : true
+              bit(v,i) == 1 : value'(bus,v,i + 1,j / 2) &&  bus[i]
+              otherwise    : value'(bus,v,i + 1,j / 2) && !bus[i];
+            }
+}
+
+
+
+MAIN {
+
+  INPUTS {
+    seeOpponent;
+    opponentStep;
+    opponentX[4];
+    opponentY[4];
+  }
+
+  OUTPUTS {
+    myPosX[4];
+    myPosY[4];
+  }
+  
+  INITIALLY {
+    value(opponentX,0);
+    value(opponentY,0);
+  }
+  
+  PRESET {
+    value(myPosX,0);
+    value(myPosY,0);
+  }
+  
+  REQUIRE {    
+  
+     // The opponent can only move in every second step, and only by 1 in any direction
+     G(!(opponentStep <-> X opponentStep));
+     G(!X opponentStep -> (
+        &&[0 <= x < 4] 
+        &&[0 <= y < 4]
+          (value(opponentX,x) <-> X value(opponentX,x))
+      ));
+    G(X opponentStep -> (
+        ||[0 <= x < 4] 
+        ||[MAX({0,x-1}) <= xPrime < MIN({4,x+1})]
+        &&[0 <= y < 4]
+          (value(opponentX,x) && value(opponentY,y) && X value(opponentX,xPrime) && X value(opponentY,y))
+      ) || (
+        ||[0 <= y < 4] 
+        ||[MAX({0,y-1}) <= yPrime < MIN({4,y+1})]
+        &&[0 <= x < 4]
+          (value(opponentX,x) && value(opponentY,y) && X value(opponentX,x) && X value(opponentY,yPrime))
+      )
+      );
+    
+    
+    
+  }
+
+  ASSUMPTIONS {
+    
+  }
+
+  ASSERT {
+ 
+    // We need to move correctly
+    G((
+        ||[0 <= x < 15] 
+        ||[MAX({0,x-1}) <= xPrime < MIN({4,x+1})]
+        &&[0 <= y < 15]
+          (value(myPosX,x) && value(myPosY,y) && X value(myPosX,xPrime) && X value(myPosY,y))
+      ) || (
+        ||[0 <= y < 15] 
+        ||[MAX({0,y-1}) <= yPrime < MIN({4,y+1})]
+        &&[0 <= x < 15]
+          (value(myPosY,x) && value(opponentX,y) && X value(myPosY,x) && X value(myPosY,yPrime))
+      )
+      );
+      
+    // No crashes
+    G(
+      &&[0 <= x < 15]
+      &&[0 <= y < 15]
+      (!value(myPosX,x) || !value(myPosX,y) || (!value(opponentX,x)) || !value(opponentY,y)));
+        
+  }
+
+  GUARANTEES {
+    G F (value(myPosX,0) && value(myPosY,0));
+    G F (value(myPosX,15) && value(myPosY,15));
+   
+  }
+
+}
