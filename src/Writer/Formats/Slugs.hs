@@ -24,7 +24,7 @@ import Control.Exception
 
 -----------------------------------------------------------------------------
 
--- | Unbeast format writer.
+-- | Slugs format writer.
 
 writeFormat
   :: Configuration -> Specification -> Either Error String
@@ -45,7 +45,9 @@ writeFormat c s =
         ss = initSys gr
         rs = assertEnv gr
         is = assertSys gr
-        (le,ls) = head $ liveness gr
+        (le,ls) = case liveness gr of
+          []  -> ([],[])
+          x:_ -> x
 
       (iv,ov) <- evalSignals c s
       
