@@ -73,35 +73,36 @@ writeFormat c s =
              "\n" ++ unlines (map prFormula ls))
 
     prFormula fml = case fml of
-      TTrue                 -> "TRUE"
-      FFalse                -> "FALSE"
+      TTrue                 -> "1"
+      FFalse                -> "0"
       Atomic x              -> show x
-      Not x                 -> "!" ++ prFormula' x 
-      Next (Atomic x)       -> show x ++ "'"
-      Next (Not (Atomic x)) -> "!(" ++ show x ++ "')"
-      Next (And xs)         -> prFormula $ And $ map Next xs
-      Next (Or xs)          -> prFormula $ Or $ map Next xs      
-      Next x                -> "X " ++ prFormula' x 
+      Not x                 -> "! " ++ prFormula x
+      Next x                -> prFormulaNext x
       And []                -> prFormula TTrue
       And [x]               -> prFormula x
-      And (x:xr)            -> prFormula' x ++
-                              concatMap (\y -> " && " ++ prFormula' y) xr
+      And (x:xr)            -> "& " ++ prFormula x ++ " " ++ (prFormula (And xr))
       Or []                 -> prFormula FFalse
       Or [x]                -> prFormula x
-      Or (x:xr)             -> prFormula' x ++ 
-                              concatMap (\y -> " || " ++ prFormula' y) xr
-      Implies x y           -> prFormula' x ++ " -> " ++ prFormula' y
-      Equiv x y             -> prFormula' x ++ " <-> " ++ prFormula' y
+      Or (x:xr)             -> "| " ++ prFormula x ++ " " ++ (prFormula (Or xr))
+      Implies x y           -> "| ! " ++ prFormula x ++ " " ++ prFormula y
+      Equiv x y             -> "! ^ " ++ prFormula x ++ " " ++ prFormula y
       _                     -> assert False undefined
 
       where
-        prFormula' f = case f of
-          TTrue                 -> prFormula f
-          FFalse                -> prFormula f
-          Atomic _              -> prFormula f
-          Not _                 -> prFormula f
-          Next (Atomic _)       -> prFormula f
-          Next (Not (Atomic _)) -> prFormula f          
-          _                     -> "(" ++ prFormula f ++ ")"
+            prFormulaNext fml = case fml of
+              TTrue                 -> "1"
+              FFalse                -> "0"
+              Atomic x              -> show x ++ "'"
+              Not x                 -> "! " ++ prFormulaNext x
+              Next x                -> assert False undefined
+              And []                -> prFormulaNext TTrue
+              And [x]               -> prFormulaNext x
+              And (x:xr)            -> "& " ++ prFormulaNext x ++ " " ++ (prFormulaNext (And xr))
+              Or []                 -> prFormulaNext FFalse
+              Or [x]                -> prFormulaNext x
+              Or (x:xr)             -> "| " ++ prFormulaNext x ++ " " ++ (prFormulaNext (Or xr))
+              Implies x y           -> "| ! " ++ prFormulaNext x ++ " " ++ prFormulaNext y
+              Equiv x y             -> "! ^ " ++ prFormulaNext x ++ " " ++ prFormulaNext y
+              _                     -> assert False undefined
 
 -----------------------------------------------------------------------------
